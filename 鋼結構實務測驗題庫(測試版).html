@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>鋼構刷題系統 PRO</title>
+<style>
+:root {
+  --bg1:#dbeafe; --bg2:#f8fafc; --card:#ffffff; --line:#e5e7eb;
+  --text:#111827; --muted:#6b7280; --primary:#2563eb; --primary2:#1d4ed8;
+  --danger:#dc2626; --dangerBg:#fef2f2; --success:#059669; --successBg:#ecfdf5;
+  --warning:#d97706; --shadow:0 12px 32px rgba(15,23,42,.12);
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; padding:24px; font-family:"Microsoft JhengHei", Arial, sans-serif;
+  color:var(--text);
+  background:linear-gradient(135deg,var(--bg1),var(--bg2));
+}
+.wrap {
+  max-width:980px; margin:0 auto; background:rgba(255,255,255,.92);
+  backdrop-filter: blur(6px);
+  border:1px solid rgba(255,255,255,.65);
+  border-radius:22px; padding:24px; box-shadow:var(--shadow);
+}
+h1 { margin:0 0 8px; font-size:32px; }
+.sub { color:var(--muted); margin-bottom:18px; }
+.toolbar {
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:18px;
+}
+.modebox {
+  display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding:10px 12px;
+  border:1px solid var(--line); border-radius:14px; background:#fff;
+}
+.modebox label { cursor:pointer; }
+button {
+  border:none; border-radius:12px; padding:11px 16px; font-size:15px; cursor:pointer;
+  color:#fff; background:linear-gradient(135deg,var(--primary),var(--primary2));
+  box-shadow:0 8px 20px rgba(37,99,235,.22);
+}
+button.secondary {
+  background:linear-gradient(135deg,#475569,#334155);
+  box-shadow:0 8px 20px rgba(51,65,85,.18);
+}
+button.danger {
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+  box-shadow:0 8px 20px rgba(220,38,38,.18);
+}
+button:disabled { opacity:.6; cursor:not-allowed; }
+.topstats {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:12px; margin:18px 0;
+}
+.stat {
+  background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px;
+}
+.stat .label { color:var(--muted); font-size:13px; }
+.stat .value { font-size:28px; font-weight:800; margin-top:4px; }
+.fail-banner {
+  margin:14px 0 6px; padding:18px; text-align:center; border-radius:18px;
+  background:linear-gradient(135deg,#fee2e2,#fecaca); color:var(--danger);
+  font-size:42px; font-weight:900; letter-spacing:2px;
+}
+.pass-banner {
+  margin:14px 0 6px; padding:14px; text-align:center; border-radius:18px;
+  background:linear-gradient(135deg,#dcfce7,#bbf7d0); color:var(--success);
+  font-size:26px; font-weight:800;
+}
+.question-card {
+  background:var(--card); border:1px solid var(--line); border-radius:18px;
+  padding:16px; margin:12px 0;
+}
+.q-meta {
+  display:flex; gap:10px; flex-wrap:wrap; margin-bottom:8px; color:var(--muted); font-size:12px;
+}
+.q-title { font-size:19px; font-weight:700; line-height:1.55; margin-bottom:10px; }
+.options {
+  display:grid; gap:8px;
+}
+.option {
+  border:1px solid var(--line); border-radius:12px; padding:10px 12px; background:#fff;
+}
+.option:hover { background:#f8fafc; }
+.option input { margin-right:8px; }
+.section-title {
+  margin:18px 0 8px; font-size:22px; font-weight:800;
+}
+.note {
+  color:var(--muted); font-size:14px; margin:8px 0 0;
+}
+.wrong-item {
+  border:1px solid #fecaca; background:var(--dangerBg); border-radius:16px; padding:14px; margin:10px 0;
+}
+.correct-answer { color:var(--danger); font-weight:800; }
+.good { color:var(--success); font-weight:800; }
+.stats-table {
+  width:100%; border-collapse:collapse; margin-top:10px; background:#fff; border-radius:14px; overflow:hidden;
+}
+.stats-table th, .stats-table td {
+  border-bottom:1px solid var(--line); padding:10px 12px; text-align:left;
+}
+.stats-table th { background:#f8fafc; }
+.pill {
+  display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700;
+  background:#eef2ff; color:#3730a3;
+}
+.hidden { display:none; }
+.footer-gap { height:8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>鋼構刷題系統 PRO</h1>
+  <div class="sub">25 題一回，每題 4 分，滿分 100。支援錯題重測、答對 3 次移除、章節錯誤率統計、不及格語音提醒。</div>
+
+  <div class="toolbar">
+    <div class="modebox">
+      <span class="pill">題庫模式</span>
+      <label><input type="radio" name="mode" value="concept" checked> 觀念題 100 題</label>
+      <label><input type="radio" name="mode" value="numeric"> 數值題 50 題</label>
+      <label><input type="radio" name="mode" value="mixed"> 混合題庫 150 題</label>
+    </div>
+    <button onclick="startQuiz()">開始測驗</button>
+    <button class="secondary" onclick="startWrongQuiz()">錯題重測</button>
+    <button class="secondary" onclick="showStats()">章節錯誤率</button>
+    <button class="danger" onclick="clearProgress()">清除錯題記錄</button>
+  </div>
+
+  <div id="topstats" class="topstats hidden"></div>
+  <div id="banner"></div>
+  <div id="quiz"></div>
+  <div id="actionBar" class="hidden">
+    <button onclick="submitQuiz()">交卷評分</button>
+  </div>
+  <div id="result"></div>
+  <div class="footer-gap"></div>
+</div>
+
+<script>
+const bank = [{"id": "concept-1", "section": "觀念題", "chapter": "Chapter 1", "source_no": 1, "q": "鋼材於地震中能吸收能量之主要機制為何？", "options": {"A": "高強度", "B": "高剛性", "C": "延展性", "D": "低密度"}, "answer": "C"}, {"id": "concept-2", "section": "觀念題", "chapter": "Chapter 1", "source_no": 2, "q": "下列何者「不是」鋼材抗震能力來源？", "options": {"A": "塑性變形", "B": "能量耗散", "C": "延展性", "D": "高強度"}, "answer": "D"}, {"id": "concept-3", "section": "觀念題", "chapter": "Chapter 1", "source_no": 3, "q": "焊接接頭相較螺栓接頭，其主要優點為何？", "options": {"A": "易滑移", "B": "連續性佳", "C": "強度低", "D": "施工慢"}, "answer": "B"}, {"id": "concept-4", "section": "觀念題", "chapter": "Chapter 1", "source_no": 4, "q": "鋼材被視為均質均向材料，表示其性質為何？", "options": {"A": "方向不同", "B": "各方向相同", "C": "隨機變化", "D": "脆性"}, "answer": "B"}, {"id": "concept-5", "section": "觀念題", "chapter": "Chapter 1", "source_no": 5, "q": "鋼構施工常採預製方式，其主要優點為何？", "options": {"A": "增加重量", "B": "縮短工期", "C": "增加成本", "D": "降低強度"}, "answer": "B"}, {"id": "concept-6", "section": "觀念題", "chapter": "Chapter 1", "source_no": 6, "q": "地震力大小與結構何者成正比？", "options": {"A": "面積", "B": "體積", "C": "質量", "D": "剛度"}, "answer": "C"}, {"id": "concept-7", "section": "觀念題", "chapter": "Chapter 1", "source_no": 7, "q": "鋼構可應用於大跨度結構，主因為何？", "options": {"A": "密度低", "B": "強度重量比高", "C": "施工慢", "D": "價格低"}, "answer": "B"}, {"id": "concept-8", "section": "觀念題", "chapter": "Chapter 1", "source_no": 8, "q": "鋼材具可回收性，此性質屬於何種特性？", "options": {"A": "結構性", "B": "環保性", "C": "力學性", "D": "幾何性"}, "answer": "B"}, {"id": "concept-9", "section": "觀念題", "chapter": "Chapter 1", "source_no": 9, "q": "鋼材於高溫下，其強度與彈性模數會如何變化？", "options": {"A": "增加", "B": "下降", "C": "不變", "D": "震盪"}, "answer": "B"}, {"id": "concept-10", "section": "觀念題", "chapter": "Chapter 1", "source_no": 10, "q": "P-Δ效應中，Δ代表何物理量？", "options": {"A": "應力", "B": "位移", "C": "力", "D": "溫度"}, "answer": "B"}, {"id": "concept-11", "section": "觀念題", "chapter": "Chapter 1", "source_no": 11, "q": "鋼構防蝕措施中最常見方法為何？", "options": {"A": "沖水", "B": "塗裝或鍍鋅", "C": "冷卻", "D": "加熱"}, "answer": "B"}, {"id": "concept-12", "section": "觀念題", "chapter": "Chapter 1", "source_no": 12, "q": "挫屈破壞屬於何種破壞型式？", "options": {"A": "強度破壞", "B": "穩定破壞", "C": "疲勞破壞", "D": "剪力破壞"}, "answer": "B"}, {"id": "concept-13", "section": "觀念題", "chapter": "Chapter 1", "source_no": 13, "q": "建築高度增加時，用鋼量通常如何變化？", "options": {"A": "減少", "B": "不變", "C": "增加", "D": "隨機"}, "answer": "C"}, {"id": "concept-14", "section": "觀念題", "chapter": "Chapter 1", "source_no": 14, "q": "鋼材價格波動主要受何影響？", "options": {"A": "溫度", "B": "市場供需", "C": "密度", "D": "施工"}, "answer": "B"}, {"id": "concept-15", "section": "觀念題", "chapter": "Chapter 1", "source_no": 15, "q": "鋼構耐火性能相較RC為何？", "options": {"A": "較佳", "B": "較差", "C": "相同", "D": "無關"}, "answer": "B"}, {"id": "concept-16", "section": "觀念題", "chapter": "Chapter 1", "source_no": 16, "q": "鋼材溫度上升時，其彈性模數約如何變化？", "options": {"A": "增加", "B": "下降", "C": "不變", "D": "增加2倍"}, "answer": "B"}, {"id": "concept-17", "section": "觀念題", "chapter": "Chapter 1", "source_no": 17, "q": "鋼材腐蝕主要發生於何種環境？", "options": {"A": "乾燥", "B": "潮濕", "C": "高溫", "D": "低溫"}, "answer": "B"}, {"id": "concept-18", "section": "觀念題", "chapter": "Chapter 1", "source_no": 18, "q": "鋼構施工相較RC，品質控制較容易之原因為何？", "options": {"A": "人工多", "B": "工廠製造", "C": "現場施工", "D": "材料差"}, "answer": "B"}, {"id": "concept-19", "section": "觀念題", "chapter": "Chapter 1", "source_no": 19, "q": "鋼材破壞前通常會出現何種現象？", "options": {"A": "無變形", "B": "塑性變形", "C": "瞬間斷裂", "D": "無預警"}, "answer": "B"}, {"id": "concept-20", "section": "觀念題", "chapter": "Chapter 1", "source_no": 20, "q": "挫屈破壞之特性為何？", "options": {"A": "漸進", "B": "突然", "C": "延性", "D": "塑性"}, "answer": "B"}, {"id": "concept-21", "section": "觀念題", "chapter": "Chapter 2", "source_no": 21, "q": "鋼材彈性模數E約為何值？", "options": {"A": "20 MPa", "B": "200 GPa", "C": "2 GPa", "D": "2000 GPa"}, "answer": "B"}, {"id": "concept-22", "section": "觀念題", "chapter": "Chapter 2", "source_no": 22, "q": "應變ε定義為何？", "options": {"A": "P/A", "B": "ΔL/L", "C": "M/S", "D": "EI"}, "answer": "B"}, {"id": "concept-23", "section": "觀念題", "chapter": "Chapter 2", "source_no": 23, "q": "鋼材降伏強度通常以何符號表示？", "options": {"A": "E", "B": "fy", "C": "fu", "D": "σ"}, "answer": "B"}, {"id": "concept-24", "section": "觀念題", "chapter": "Chapter 2", "source_no": 24, "q": "高強度鋼降伏點通常以何定義？", "options": {"A": "比例極限", "B": "0.2%偏移", "C": "1%應變", "D": "極限強度"}, "answer": "B"}, {"id": "concept-25", "section": "觀念題", "chapter": "Chapter 2", "source_no": 25, "q": "碳含量增加對鋼材性質之影響為何？", "options": {"A": "延性增加", "B": "強度增加但延性下降", "C": "不變", "D": "軟化"}, "answer": "B"}, {"id": "concept-26", "section": "觀念題", "chapter": "Chapter 2", "source_no": 26, "q": "SN鋼之主要用途為何？", "options": {"A": "一般用途", "B": "耐震結構", "C": "耐火", "D": "防水"}, "answer": "B"}, {"id": "concept-27", "section": "觀念題", "chapter": "Chapter 2", "source_no": 27, "q": "SMA鋼主要特性為何？", "options": {"A": "高強度", "B": "耐候性", "C": "耐震", "D": "低密度"}, "answer": "B"}, {"id": "concept-28", "section": "觀念題", "chapter": "Chapter 2", "source_no": 28, "q": "若斷面距中性軸距離y增加，則S會如何變化？", "options": {"A": "增加", "B": "減少", "C": "不變", "D": "不一定"}, "answer": "B"}, {"id": "concept-29", "section": "觀念題", "chapter": "Chapter 2", "source_no": 29, "q": "慣性矩I代表何種能力？", "options": {"A": "抗拉", "B": "抗彎剛性", "C": "抗剪", "D": "抗壓"}, "answer": "B"}, {"id": "concept-30", "section": "觀念題", "chapter": "Chapter 2", "source_no": 30, "q": "回轉半徑r之公式為何？", "options": {"A": "L/r", "B": "√(I/A)", "C": "I/A", "D": "A/I"}, "answer": "B"}, {"id": "concept-31", "section": "觀念題", "chapter": "Chapter 2", "source_no": 31, "q": "彎曲應力σ之公式為何？", "options": {"A": "P/A", "B": "M/S", "C": "EI", "D": "Δ/L"}, "answer": "B"}, {"id": "concept-32", "section": "觀念題", "chapter": "Chapter 2", "source_no": 32, "q": "塑性模數Z主要用於何種分析？", "options": {"A": "彈性", "B": "塑性", "C": "剪力", "D": "扭力"}, "answer": "B"}, {"id": "concept-33", "section": "觀念題", "chapter": "Chapter 2", "source_no": 33, "q": "圓形斷面之特性為何？", "options": {"A": "單向強", "B": "各方向相同", "C": "弱軸強", "D": "隨機"}, "answer": "B"}, {"id": "concept-34", "section": "觀念題", "chapter": "Chapter 2", "source_no": 34, "q": "材料韌性代表何種能力？", "options": {"A": "剛性", "B": "吸收能量", "C": "強度", "D": "重量"}, "answer": "B"}, {"id": "concept-35", "section": "觀念題", "chapter": "Chapter 2", "source_no": 35, "q": "脆性材料破壞特性為何？", "options": {"A": "大變形", "B": "無預警破壞", "C": "延性大", "D": "塑性大"}, "answer": "B"}, {"id": "concept-36", "section": "觀念題", "chapter": "Chapter 2", "source_no": 36, "q": "淬火熱處理主要作用為何？", "options": {"A": "軟化", "B": "增加強度", "C": "減重", "D": "降溫"}, "answer": "B"}, {"id": "concept-37", "section": "觀念題", "chapter": "Chapter 2", "source_no": 37, "q": "退火處理主要目的為何？", "options": {"A": "強化", "B": "增加延性", "C": "硬化", "D": "冷卻"}, "answer": "B"}, {"id": "concept-38", "section": "觀念題", "chapter": "Chapter 2", "source_no": 38, "q": "殘留應力主要來自何處？", "options": {"A": "外力", "B": "製程", "C": "溫度", "D": "濕度"}, "answer": "B"}, {"id": "concept-39", "section": "觀念題", "chapter": "Chapter 2", "source_no": 39, "q": "型鋼常見種類為何？", "options": {"A": "圓管", "B": "H、I、C、L型", "C": "板", "D": "殼"}, "answer": "B"}, {"id": "concept-40", "section": "觀念題", "chapter": "Chapter 2", "source_no": 40, "q": "材料選用主要依何決定？", "options": {"A": "價格", "B": "使用環境與荷重", "C": "顏色", "D": "重量"}, "answer": "B"}, {"id": "concept-41", "section": "觀念題", "chapter": "Chapter 3", "source_no": 41, "q": "鋼結構中梁柱系統主要功能為何？", "options": {"A": "裝飾", "B": "承載並傳遞荷重", "C": "防水", "D": "隔音"}, "answer": "B"}, {"id": "concept-42", "section": "觀念題", "chapter": "Chapter 3", "source_no": 42, "q": "H型鋼斷面中，強軸方向之慣性矩通常如何？", "options": {"A": "較小", "B": "較大", "C": "相同", "D": "不一定"}, "answer": "B"}, {"id": "concept-43", "section": "觀念題", "chapter": "Chapter 3", "source_no": 43, "q": "若結構受力方向改變，選擇斷面時應考量何者？", "options": {"A": "重量", "B": "強弱軸方向", "C": "顏色", "D": "價格"}, "answer": "B"}, {"id": "concept-44", "section": "觀念題", "chapter": "Chapter 3", "source_no": 44, "q": "梁系統中荷重傳遞正確順序為何？", "options": {"A": "柱→梁", "B": "次梁→主梁→柱", "C": "主→次", "D": "任意"}, "answer": "B"}, {"id": "concept-45", "section": "觀念題", "chapter": "Chapter 3", "source_no": 45, "q": "若違反強柱弱梁設計，地震時最可能發生何情形？", "options": {"A": "梁先破壞", "B": "結構安全", "C": "柱先破壞", "D": "無影響"}, "answer": "C"}, {"id": "concept-46", "section": "觀念題", "chapter": "Chapter 3", "source_no": 46, "q": "鋼構抗側力系統中，斜撐主要承受何種力？", "options": {"A": "軸力", "B": "拉壓力", "C": "彎矩", "D": "剪力"}, "answer": "B"}, {"id": "concept-47", "section": "觀念題", "chapter": "Chapter 3", "source_no": 47, "q": "剪力接頭設計主要傳遞何種內力？", "options": {"A": "彎矩", "B": "剪力", "C": "軸力", "D": "扭矩"}, "answer": "B"}, {"id": "concept-48", "section": "觀念題", "chapter": "Chapter 3", "source_no": 48, "q": "抗彎接頭與剪力接頭差異主要在於何者？", "options": {"A": "材料", "B": "傳遞內力種類", "C": "重量", "D": "施工"}, "answer": "B"}, {"id": "concept-49", "section": "觀念題", "chapter": "Chapter 3", "source_no": 49, "q": "剪力圖中V值變化通常發生於何處？", "options": {"A": "均佈載重", "B": "集中力", "C": "支點", "D": "均勻區段"}, "answer": "B"}, {"id": "concept-50", "section": "觀念題", "chapter": "Chapter 3", "source_no": 50, "q": "鋼承板Deck主要功能為何？", "options": {"A": "裝飾", "B": "模板與結構複合", "C": "防火", "D": "隔音"}, "answer": "B"}, {"id": "concept-51", "section": "觀念題", "chapter": "Chapter 3", "source_no": 51, "q": "鋼承板與混凝土組合後之行為為何？", "options": {"A": "分離", "B": "共同受力", "C": "無關", "D": "競爭"}, "answer": "B"}, {"id": "concept-52", "section": "觀念題", "chapter": "Chapter 3", "source_no": 52, "q": "高層建築設計中，何者最重要？", "options": {"A": "顏色", "B": "抗側力系統", "C": "重量", "D": "裝飾"}, "answer": "B"}, {"id": "concept-53", "section": "觀念題", "chapter": "Chapter 3", "source_no": 53, "q": "Shop Drawing之主要用途為何？", "options": {"A": "設計", "B": "製造加工", "C": "分析", "D": "監造"}, "answer": "B"}, {"id": "concept-54", "section": "觀念題", "chapter": "Chapter 3", "source_no": 54, "q": "Erection Drawing之用途為何？", "options": {"A": "分析", "B": "施工安裝", "C": "製造", "D": "設計"}, "answer": "B"}, {"id": "concept-55", "section": "觀念題", "chapter": "Chapter 3", "source_no": 55, "q": "SAP或ETABS主要用途為何？", "options": {"A": "繪圖", "B": "結構分析", "C": "估價", "D": "施工"}, "answer": "B"}, {"id": "concept-56", "section": "觀念題", "chapter": "Chapter 3", "source_no": 56, "q": "結構分析後第一步檢核應為何？", "options": {"A": "位移", "B": "反力平衡", "C": "應力", "D": "重量"}, "answer": "B"}, {"id": "concept-57", "section": "觀念題", "chapter": "Chapter 3", "source_no": 57, "q": "若反力總和不等於外力，表示何種問題？", "options": {"A": "安全", "B": "模型錯誤", "C": "材料錯誤", "D": "荷重錯誤"}, "answer": "B"}, {"id": "concept-58", "section": "觀念題", "chapter": "Chapter 3", "source_no": 58, "q": "模型中出現多個零力構件，最可能原因為何？", "options": {"A": "設計良好", "B": "建模錯誤", "C": "荷重不足", "D": "安全"}, "answer": "B"}, {"id": "concept-59", "section": "觀念題", "chapter": "Chapter 3", "source_no": 59, "q": "有效長度係數K=1代表何種條件？", "options": {"A": "固定", "B": "兩端鉸接", "C": "自由端", "D": "一端固定"}, "answer": "B"}, {"id": "concept-60", "section": "觀念題", "chapter": "Chapter 3", "source_no": 60, "q": "結構分析結果應如何處理？", "options": {"A": "直接採用", "B": "需工程判斷", "C": "忽略", "D": "平均"}, "answer": "B"}, {"id": "concept-61", "section": "觀念題", "chapter": "Chapter 4", "source_no": 61, "q": "鋼結構設計四大原則為何？", "options": {"A": "安全", "B": "功能、安全、經濟、美觀", "C": "成本", "D": "施工"}, "answer": "B"}, {"id": "concept-62", "section": "觀念題", "chapter": "Chapter 4", "source_no": 62, "q": "設計流程正確順序為何？", "options": {"A": "施工→設計", "B": "分析→設計→繪圖", "C": "繪圖→分析", "D": "任意"}, "answer": "B"}, {"id": "concept-63", "section": "觀念題", "chapter": "Chapter 4", "source_no": 63, "q": "方案評估應採何種方式？", "options": {"A": "單一標準", "B": "多準則比較", "C": "價格唯一", "D": "隨機"}, "answer": "B"}, {"id": "concept-64", "section": "觀念題", "chapter": "Chapter 4", "source_no": 64, "q": "過度設計（Overdesign）主要問題為何？", "options": {"A": "不安全", "B": "浪費成本", "C": "強度不足", "D": "不穩定"}, "answer": "B"}, {"id": "concept-65", "section": "觀念題", "chapter": "Chapter 4", "source_no": 65, "q": "ASD設計法主要控制何者？", "options": {"A": "強度", "B": "應力", "C": "變形", "D": "重量"}, "answer": "B"}, {"id": "concept-66", "section": "觀念題", "chapter": "Chapter 4", "source_no": 66, "q": "ASD公式為何？", "options": {"A": "φRn≥Q", "B": "σ≤σallow", "C": "M/S", "D": "P/A"}, "answer": "B"}, {"id": "concept-67", "section": "觀念題", "chapter": "Chapter 4", "source_no": 67, "q": "LSD設計法主要控制何者？", "options": {"A": "應力", "B": "強度", "C": "重量", "D": "長度"}, "answer": "B"}, {"id": "concept-68", "section": "觀念題", "chapter": "Chapter 4", "source_no": 68, "q": "LSD公式為何？", "options": {"A": "σ≤σallow", "B": "φRn≥ΣγQ", "C": "EI", "D": "Δ/L"}, "answer": "B"}, {"id": "concept-69", "section": "觀念題", "chapter": "Chapter 4", "source_no": 69, "q": "φ係數之意義為何？", "options": {"A": "安全係數", "B": "強度折減", "C": "荷重", "D": "剛度"}, "answer": "B"}, {"id": "concept-70", "section": "觀念題", "chapter": "Chapter 4", "source_no": 70, "q": "若φRn < ΣγQ，表示何種狀況？", "options": {"A": "安全", "B": "不安全", "C": "過設計", "D": "無關"}, "answer": "B"}, {"id": "concept-71", "section": "觀念題", "chapter": "Chapter 4", "source_no": 71, "q": "載重組合設計應如何進行？", "options": {"A": "選一組", "B": "全部組合", "C": "忽略", "D": "平均"}, "answer": "B"}, {"id": "concept-72", "section": "觀念題", "chapter": "Chapter 4", "source_no": 72, "q": "1.2D+1.6L中1.6代表何？", "options": {"A": "材料強度", "B": "活載放大", "C": "剛度", "D": "應變"}, "answer": "B"}, {"id": "concept-73", "section": "觀念題", "chapter": "Chapter 4", "source_no": 73, "q": "載重組合中±之意義為何？", "options": {"A": "方向", "B": "取最大不利", "C": "平均", "D": "誤差"}, "answer": "B"}, {"id": "concept-74", "section": "觀念題", "chapter": "Chapter 4", "source_no": 74, "q": "AISC常見載重組合約幾組？", "options": {"A": "2", "B": "6", "C": "10", "D": "1"}, "answer": "B"}, {"id": "concept-75", "section": "觀念題", "chapter": "Chapter 4", "source_no": 75, "q": "設計應採用何種結果？", "options": {"A": "最小值", "B": "最大不利組合", "C": "平均", "D": "任意"}, "answer": "B"}, {"id": "concept-76", "section": "觀念題", "chapter": "Chapter 4", "source_no": 76, "q": "雪載於台灣設計通常如何處理？", "options": {"A": "必須", "B": "幾乎忽略", "C": "主要載重", "D": "控制"}, "answer": "B"}, {"id": "concept-77", "section": "觀念題", "chapter": "Chapter 4", "source_no": 77, "q": "雪載主要作用位置為何？", "options": {"A": "柱", "B": "屋頂", "C": "基礎", "D": "牆"}, "answer": "B"}, {"id": "concept-78", "section": "觀念題", "chapter": "Chapter 4", "source_no": 78, "q": "冰載會造成何種影響？", "options": {"A": "減重", "B": "增加載重", "C": "減少應力", "D": "消失"}, "answer": "B"}, {"id": "concept-79", "section": "觀念題", "chapter": "Chapter 4", "source_no": 79, "q": "冰載對結構內力之影響為何？", "options": {"A": "減少", "B": "增加", "C": "不變", "D": "消失"}, "answer": "B"}, {"id": "concept-80", "section": "觀念題", "chapter": "Chapter 4", "source_no": 80, "q": "設計最終控制條件為何？", "options": {"A": "平均值", "B": "控制組合", "C": "最小值", "D": "任意"}, "answer": "B"}, {"id": "concept-81", "section": "觀念題", "chapter": "Chapter 5", "source_no": 81, "q": "Ag代表何種面積？", "options": {"A": "淨面積", "B": "總斷面", "C": "有效面", "D": "孔"}, "answer": "B"}, {"id": "concept-82", "section": "觀念題", "chapter": "Chapter 5", "source_no": 82, "q": "An代表何種面積？", "options": {"A": "總面積", "B": "扣孔後淨面", "C": "有效面", "D": "平均"}, "answer": "B"}, {"id": "concept-83", "section": "觀念題", "chapter": "Chapter 5", "source_no": 83, "q": "螺栓孔徑dh通常為？", "options": {"A": "d", "B": "d+3mm", "C": "d-3", "D": "2d"}, "answer": "B"}, {"id": "concept-84", "section": "觀念題", "chapter": "Chapter 5", "source_no": 84, "q": "若孔數增加，An會如何變化？", "options": {"A": "增加", "B": "減少", "C": "不變", "D": "不一定"}, "answer": "B"}, {"id": "concept-85", "section": "觀念題", "chapter": "Chapter 5", "source_no": 85, "q": "有效面積Ae之公式為何？", "options": {"A": "Ag", "B": "UAn", "C": "An/U", "D": "Ag-An"}, "answer": "B"}, {"id": "concept-86", "section": "觀念題", "chapter": "Chapter 5", "source_no": 86, "q": "U值範圍通常為？", "options": {"A": "0~0.5", "B": "0.75~1", "C": "1~2", "D": "2~3"}, "answer": "B"}, {"id": "concept-87", "section": "觀念題", "chapter": "Chapter 5", "source_no": 87, "q": "拉力設計中應取何者控制？", "options": {"A": "最大值", "B": "最小強度", "C": "平均", "D": "任意"}, "answer": "B"}, {"id": "concept-88", "section": "觀念題", "chapter": "Chapter 5", "source_no": 88, "q": "若存在多條破壞路徑，應取何者？", "options": {"A": "最大An", "B": "最小An", "C": "平均", "D": "任意"}, "answer": "B"}, {"id": "concept-89", "section": "觀念題", "chapter": "Chapter 5", "source_no": 89, "q": "zigzag破壞相較直線破壞，其An通常？", "options": {"A": "較小", "B": "較大", "C": "相同", "D": "消失"}, "answer": "B"}, {"id": "concept-90", "section": "觀念題", "chapter": "Chapter 5", "source_no": 90, "q": "Block shear破壞為何？", "options": {"A": "彎", "B": "剪+拉", "C": "壓", "D": "扭"}, "answer": "B"}, {"id": "concept-91", "section": "觀念題", "chapter": "Chapter 5", "source_no": 91, "q": "Euler公式為何？", "options": {"A": "P/A", "B": "π²EI/(kL)²", "C": "M/S", "D": "Δ/L"}, "answer": "B"}, {"id": "concept-92", "section": "觀念題", "chapter": "Chapter 5", "source_no": 92, "q": "細長比λ為何？", "options": {"A": "L/r", "B": "kL/r", "C": "r/L", "D": "L²"}, "answer": "B"}, {"id": "concept-93", "section": "觀念題", "chapter": "Chapter 5", "source_no": 93, "q": "λ增加時構件穩定性如何？", "options": {"A": "增加", "B": "降低", "C": "不變", "D": "增加2倍"}, "answer": "B"}, {"id": "concept-94", "section": "觀念題", "chapter": "Chapter 5", "source_no": 94, "q": "長柱主要破壞模式為何？", "options": {"A": "壓碎", "B": "彈性挫屈", "C": "剪力", "D": "疲勞"}, "answer": "B"}, {"id": "concept-95", "section": "觀念題", "chapter": "Chapter 5", "source_no": 95, "q": "短柱主要破壞模式為何？", "options": {"A": "挫屈", "B": "壓碎", "C": "彎曲", "D": "疲勞"}, "answer": "B"}, {"id": "concept-96", "section": "觀念題", "chapter": "Chapter 5", "source_no": 96, "q": "壓力設計強度公式為何？", "options": {"A": "AgFy", "B": "φAgFcr", "C": "M/S", "D": "P/A"}, "answer": "B"}, {"id": "concept-97", "section": "觀念題", "chapter": "Chapter 5", "source_no": 97, "q": "設計流程第一步為何？", "options": {"A": "Fcr", "B": "λ計算", "C": "Pn", "D": "U"}, "answer": "B"}, {"id": "concept-98", "section": "觀念題", "chapter": "Chapter 5", "source_no": 98, "q": "側向支撐作用為何？", "options": {"A": "增加長度", "B": "減少kL", "C": "增加重量", "D": "無"}, "answer": "B"}, {"id": "concept-99", "section": "觀念題", "chapter": "Chapter 5", "source_no": 99, "q": "初始缺陷對結構影響為何？", "options": {"A": "無", "B": "降低穩定", "C": "增加強度", "D": "無關"}, "answer": "B"}, {"id": "concept-100", "section": "觀念題", "chapter": "Chapter 5", "source_no": 100, "q": "拉壓設計核心概念為何？", "options": {"A": "拉穩壓強", "B": "拉強壓穩", "C": "相同", "D": "無"}, "answer": "B"}, {"id": "numeric-1", "section": "數值題", "chapter": "數值題 1", "source_no": 1, "q": "鋼材彈性模數E約為多少？", "options": {"A": "20 MPa", "B": "200 GPa", "C": "2 GPa", "D": "2000 GPa"}, "answer": "B"}, {"id": "numeric-2", "section": "數值題", "chapter": "數值題 1", "source_no": 2, "q": "鋼材泊松比ν約為？", "options": {"A": "0.1", "B": "0.3", "C": "0.5", "D": "1.0"}, "answer": "B"}, {"id": "numeric-3", "section": "數值題", "chapter": "數值題 1", "source_no": 3, "q": "剪變模數G約為E的多少？", "options": {"A": "1", "B": "約1/2.6", "C": "2", "D": "0.1"}, "answer": "B"}, {"id": "numeric-4", "section": "數值題", "chapter": "數值題 1", "source_no": 4, "q": "熱膨脹係數α約為？", "options": {"A": "1×10⁻⁶", "B": "1.2×10⁻⁵", "C": "1×10⁻³", "D": "0"}, "answer": "B"}, {"id": "numeric-5", "section": "數值題", "chapter": "數值題 1", "source_no": 5, "q": "鋼材fy常見約為？", "options": {"A": "50", "B": "100", "C": "250~350 MPa", "D": "1000"}, "answer": "C"}, {"id": "numeric-6", "section": "數值題", "chapter": "數值題 1", "source_no": 6, "q": "dh若d=20mm，則dh為？", "options": {"A": "20", "B": "23", "C": "25", "D": "30"}, "answer": "B"}, {"id": "numeric-7", "section": "數值題", "chapter": "數值題 1", "source_no": 7, "q": "Ag=2000mm²，n=2，dh=20，t=10，An為？", "options": {"A": "2000", "B": "1800", "C": "1600", "D": "1400"}, "answer": "C"}, {"id": "numeric-8", "section": "數值題", "chapter": "數值題 1", "source_no": 8, "q": "若U=0.8，An=1000，則Ae為？", "options": {"A": "1000", "B": "800", "C": "1200", "D": "600"}, "answer": "B"}, {"id": "numeric-9", "section": "數值題", "chapter": "數值題 1", "source_no": 9, "q": "σ=P/A，P=100kN，A=1000mm²，σ為？", "options": {"A": "10", "B": "100 MPa", "C": "1", "D": "1000"}, "answer": "B"}, {"id": "numeric-10", "section": "數值題", "chapter": "數值題 1", "source_no": 10, "q": "ε=ΔL/L，ΔL=2mm，L=1000mm，ε為？", "options": {"A": "0.2", "B": "0.002", "C": "0.002", "D": "2"}, "answer": "C"}, {"id": "numeric-11", "section": "數值題", "chapter": "數值題 2", "source_no": 11, "q": "S=I/y，若I=1000，y=10，S為？", "options": {"A": "10", "B": "100", "C": "1000", "D": "1"}, "answer": "B"}, {"id": "numeric-12", "section": "數值題", "chapter": "數值題 2", "source_no": 12, "q": "r=√(I/A)，I=1000，A=100，r為？", "options": {"A": "1", "B": "√10", "C": "10", "D": "100"}, "answer": "B"}, {"id": "numeric-13", "section": "數值題", "chapter": "數值題 2", "source_no": 13, "q": "λ=kL/r，k=1，L=2000，r=20，λ為？", "options": {"A": "50", "B": "100", "C": "200", "D": "20"}, "answer": "B"}, {"id": "numeric-14", "section": "數值題", "chapter": "數值題 2", "source_no": 14, "q": "φ=0.9，Rn=1000，φRn為？", "options": {"A": "1000", "B": "900", "C": "800", "D": "1100"}, "answer": "B"}, {"id": "numeric-15", "section": "數值題", "chapter": "數值題 2", "source_no": 15, "q": "1.2D+1.6L，D=100，L=50，結果？", "options": {"A": "150", "B": "200", "C": "180", "D": "220"}, "answer": "B"}, {"id": "numeric-16", "section": "數值題", "chapter": "數值題 2", "source_no": 16, "q": "E=200GPa，σ=200MPa，ε為？", "options": {"A": "1", "B": "0.001", "C": "0.01", "D": "2"}, "answer": "B"}, {"id": "numeric-17", "section": "數值題", "chapter": "數值題 2", "source_no": 17, "q": "An=Ag−ndht，Ag=2000，n=1，dh=20，t=10？", "options": {"A": "2000", "B": "1800", "C": "1600", "D": "1500"}, "answer": "B"}, {"id": "numeric-18", "section": "數值題", "chapter": "數值題 2", "source_no": 18, "q": "U=1代表？", "options": {"A": "無效", "B": "均勻受力", "C": "減少", "D": "增加"}, "answer": "B"}, {"id": "numeric-19", "section": "數值題", "chapter": "數值題 2", "source_no": 19, "q": "k=0.5代表何種支承？", "options": {"A": "鉸接", "B": "固定", "C": "自由", "D": "滑動"}, "answer": "B"}, {"id": "numeric-20", "section": "數值題", "chapter": "數值題 2", "source_no": 20, "q": "λ=200時屬於？", "options": {"A": "短柱", "B": "長柱", "C": "中柱", "D": "無"}, "answer": "B"}, {"id": "numeric-21", "section": "數值題", "chapter": "數值題 3", "source_no": 21, "q": "σ=M/S，M=100，S=10，σ？", "options": {"A": "1", "B": "10", "C": "100", "D": "1000"}, "answer": "B"}, {"id": "numeric-22", "section": "數值題", "chapter": "數值題 3", "source_no": 22, "q": "Ag增加時σ如何變化？", "options": {"A": "增加", "B": "減少", "C": "不變", "D": "無關"}, "answer": "B"}, {"id": "numeric-23", "section": "數值題", "chapter": "數值題 3", "source_no": 23, "q": "dh增加時An如何？", "options": {"A": "增加", "B": "減少", "C": "不變", "D": "隨機"}, "answer": "B"}, {"id": "numeric-24", "section": "數值題", "chapter": "數值題 3", "source_no": 24, "q": "λ增加時穩定性？", "options": {"A": "增加", "B": "降低", "C": "不變", "D": "增加2倍"}, "answer": "B"}, {"id": "numeric-25", "section": "數值題", "chapter": "數值題 3", "source_no": 25, "q": "φ值增加代表？", "options": {"A": "更保守", "B": "設計強度增加", "C": "減少", "D": "無關"}, "answer": "B"}, {"id": "numeric-26", "section": "數值題", "chapter": "數值題 3", "source_no": 26, "q": "Ag=3000，n=2，dh=22，t=10，An為？", "options": {"A": "3000", "B": "2600", "C": "2560", "D": "2400"}, "answer": "C"}, {"id": "numeric-27", "section": "數值題", "chapter": "數值題 3", "source_no": 27, "q": "An=2000，U=0.75，Ae為？", "options": {"A": "2000", "B": "1800", "C": "1500", "D": "1000"}, "answer": "C"}, {"id": "numeric-28", "section": "數值題", "chapter": "數值題 3", "source_no": 28, "q": "λ=100與λ=200比較，哪個較穩定？", "options": {"A": "200", "B": "100", "C": "相同", "D": "不一定"}, "answer": "B"}, {"id": "numeric-29", "section": "數值題", "chapter": "數值題 3", "source_no": 29, "q": "Euler中L加倍，Pcr如何變化？", "options": {"A": "不變", "B": "變為1/4", "C": "變2倍", "D": "變1/2"}, "answer": "B"}, {"id": "numeric-30", "section": "數值題", "chapter": "數值題 3", "source_no": 30, "q": "I加倍，Pcr變化？", "options": {"A": "不變", "B": "加倍", "C": "1/2", "D": "4倍"}, "answer": "B"}, {"id": "numeric-31", "section": "數值題", "chapter": "數值題 4", "source_no": 31, "q": "φ=0.75，Rn=800，φRn？", "options": {"A": "800", "B": "600", "C": "500", "D": "900"}, "answer": "B"}, {"id": "numeric-32", "section": "數值題", "chapter": "數值題 4", "source_no": 32, "q": "Ag=2000，An=1500，何者控制？", "options": {"A": "Ag", "B": "An", "C": "平均", "D": "隨機"}, "answer": "B"}, {"id": "numeric-33", "section": "數值題", "chapter": "數值題 4", "source_no": 33, "q": "zigzag路徑相比直線An？", "options": {"A": "較小", "B": "較大", "C": "相同", "D": "無"}, "answer": "B"}, {"id": "numeric-34", "section": "數值題", "chapter": "數值題 4", "source_no": 34, "q": "Block shear包含？", "options": {"A": "彎", "B": "剪+拉", "C": "壓", "D": "扭"}, "answer": "B"}, {"id": "numeric-35", "section": "數值題", "chapter": "數值題 4", "source_no": 35, "q": "k=2時代表？", "options": {"A": "固定", "B": "鉸接", "C": "自由端", "D": "無"}, "answer": "C"}, {"id": "numeric-36", "section": "數值題", "chapter": "數值題 4", "source_no": 36, "q": "σ=P/A，A減半時σ？", "options": {"A": "減半", "B": "變2倍", "C": "不變", "D": "變1/4"}, "answer": "B"}, {"id": "numeric-37", "section": "數值題", "chapter": "數值題 4", "source_no": 37, "q": "E固定，σ增加時ε？", "options": {"A": "減少", "B": "增加", "C": "不變", "D": "隨機"}, "answer": "B"}, {"id": "numeric-38", "section": "數值題", "chapter": "數值題 4", "source_no": 38, "q": "M不變，S加倍時σ？", "options": {"A": "加倍", "B": "減半", "C": "不變", "D": "增加"}, "answer": "B"}, {"id": "numeric-39", "section": "數值題", "chapter": "數值題 4", "source_no": 39, "q": "λ減半時穩定性？", "options": {"A": "下降", "B": "增加", "C": "不變", "D": "無"}, "answer": "B"}, {"id": "numeric-40", "section": "數值題", "chapter": "數值題 4", "source_no": 40, "q": "φRn=900，ΣγQ=1000，結果？", "options": {"A": "安全", "B": "不安全", "C": "過設計", "D": "無"}, "answer": "B"}, {"id": "numeric-41", "section": "數值題", "chapter": "數值題 5", "source_no": 41, "q": "Ag=3000，n=3，dh=23，t=10，An為？", "options": {"A": "3000", "B": "2600", "C": "2310", "D": "2500"}, "answer": "C"}, {"id": "numeric-42", "section": "數值題", "chapter": "數值題 5", "source_no": 42, "q": "U=0.8，An=2310，Ae為？", "options": {"A": "2310", "B": "1848", "C": "2000", "D": "1500"}, "answer": "B"}, {"id": "numeric-43", "section": "數值題", "chapter": "數值題 5", "source_no": 43, "q": "λ=kL/r，k=1，L=3000，r=15，λ？", "options": {"A": "100", "B": "200", "C": "150", "D": "50"}, "answer": "B"}, {"id": "numeric-44", "section": "數值題", "chapter": "數值題 5", "source_no": 44, "q": "Euler：E=200GPa，I=5000，kL=2000，Pcr約？", "options": {"A": "100", "B": "200", "C": "約250", "D": "500"}, "answer": "C"}, {"id": "numeric-45", "section": "數值題", "chapter": "數值題 5", "source_no": 45, "q": "Ag=2500，An=1800，U=0.75，控制？", "options": {"A": "Ag", "B": "Ae=1350", "C": "An", "D": "平均"}, "answer": "B"}, {"id": "numeric-46", "section": "數值題", "chapter": "數值題 5", "source_no": 46, "q": "dh增加5mm，n=2，t=10，An變化？", "options": {"A": "不變", "B": "減少100", "C": "增加100", "D": "減少50"}, "answer": "B"}, {"id": "numeric-47", "section": "數值題", "chapter": "數值題 5", "source_no": 47, "q": "L加倍、r不變，λ變？", "options": {"A": "不變", "B": "2倍", "C": "1/2", "D": "4倍"}, "answer": "B"}, {"id": "numeric-48", "section": "數值題", "chapter": "數值題 5", "source_no": 48, "q": "I減半時Pcr？", "options": {"A": "不變", "B": "減半", "C": "2倍", "D": "1/4"}, "answer": "B"}, {"id": "numeric-49", "section": "數值題", "chapter": "數值題 5", "source_no": 49, "q": "An=2000與An=1500兩路徑，控制？", "options": {"A": "2000", "B": "1500", "C": "平均", "D": "無"}, "answer": "B"}, {"id": "numeric-50", "section": "數值題", "chapter": "數值題 5", "source_no": 50, "q": "φ=0.9，AgFcr=2000，設計強度？", "options": {"A": "2000", "B": "1800", "C": "1500", "D": "2200"}, "answer": "B"}];
+const STORAGE_KEY = "steelQuizRecordsV1";
+let currentQuestions = [];
+let currentMode = "concept";
+let currentSource = "normal"; // normal / wrong
+let submitted = false;
+
+function getRecords() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+  } catch(e) {
+    return {};
+  }
+}
+
+function setRecords(records) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+}
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getMode() {
+  const selected = document.querySelector('input[name="mode"]:checked');
+  return selected ? selected.value : "concept";
+}
+
+function getPoolByMode(mode) {
+  if (mode === "concept") return bank.filter(q => q.section === "觀念題");
+  if (mode === "numeric") return bank.filter(q => q.section === "數值題");
+  return bank;
+}
+
+function renderTopStats(extra={}) {
+  const records = getRecords();
+  const keys = Object.keys(records);
+  let wrongPoolCount = 0;
+  let attemptCount = 0;
+  let wrongCount = 0;
+  keys.forEach(k => {
+    const r = records[k];
+    attemptCount += r.attempts || 0;
+    wrongCount += r.wrong || 0;
+    if ((r.wrong || 0) > 0 && (r.mastery || 0) < 3) wrongPoolCount += 1;
+  });
+  const html = `
+    <div class="stat"><div class="label">目前模式</div><div class="value">${extra.modeLabel || "-"}</div></div>
+    <div class="stat"><div class="label">本回題數</div><div class="value">${extra.quizCount || 0}</div></div>
+    <div class="stat"><div class="label">未熟錯題</div><div class="value">${wrongPoolCount}</div></div>
+    <div class="stat"><div class="label">累計作答</div><div class="value">${attemptCount}</div></div>
+    <div class="stat"><div class="label">累計答錯</div><div class="value">${wrongCount}</div></div>
+  `;
+  const box = document.getElementById("topstats");
+  box.innerHTML = html;
+  box.classList.remove("hidden");
+}
+
+function renderQuiz(questions) {
+  submitted = false;
+  currentQuestions = questions;
+  document.getElementById("banner").innerHTML = "";
+  document.getElementById("result").innerHTML = "";
+  document.getElementById("quiz").innerHTML = questions.map((item, idx) => `
+    <div class="question-card">
+      <div class="q-meta">
+        <span class="pill">${item.section}</span>
+        <span class="pill">${item.chapter}</span>
+        <span class="pill">原題號 #${item.source_no}</span>
+      </div>
+      <div class="q-title">${idx + 1}. ${item.q}</div>
+      <div class="options">
+        <label class="option"><input type="radio" name="q${idx}" value="A"> (A) ${item.options.A}</label>
+        <label class="option"><input type="radio" name="q${idx}" value="B"> (B) ${item.options.B}</label>
+        <label class="option"><input type="radio" name="q${idx}" value="C"> (C) ${item.options.C}</label>
+        <label class="option"><input type="radio" name="q${idx}" value="D"> (D) ${item.options.D}</label>
+      </div>
+    </div>
+  `).join("");
+  document.getElementById("actionBar").classList.remove("hidden");
+}
+
+function startQuiz() {
+  currentMode = getMode();
+  currentSource = "normal";
+  const pool = getPoolByMode(currentMode);
+  const picked = shuffleArray(pool).slice(0, Math.min(25, pool.length));
+  renderTopStats({modeLabel: currentMode === "concept" ? "觀念題" : currentMode === "numeric" ? "數值題" : "混合題庫", quizCount: picked.length});
+  renderQuiz(picked);
+}
+
+function startWrongQuiz() {
+  const records = getRecords();
+  const wrongIds = new Set(Object.keys(records).filter(id => (records[id].wrong || 0) > 0 && (records[id].mastery || 0) < 3));
+  let pool = bank.filter(q => wrongIds.has(q.id));
+
+  const selectedMode = getMode();
+  if (selectedMode === "concept") pool = pool.filter(q => q.section === "觀念題");
+  else if (selectedMode === "numeric") pool = pool.filter(q => q.section === "數值題");
+
+  if (pool.length === 0) {
+    alert("目前沒有未熟錯題。");
+    return;
+  }
+  currentMode = selectedMode;
+  currentSource = "wrong";
+  const picked = shuffleArray(pool).slice(0, Math.min(25, pool.length));
+  renderTopStats({modeLabel: "錯題重測", quizCount: picked.length});
+  renderQuiz(picked);
+}
+
+function speakEncourage() {
+  try {
+    if ("speechSynthesis" in window) {
+      const utter = new SpeechSynthesisUtterance("你要加油");
+      utter.lang = "zh-TW";
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utter);
+    }
+  } catch (e) {}
+}
+
+function submitQuiz() {
+  if (submitted || currentQuestions.length === 0) return;
+  submitted = true;
+
+  const records = getRecords();
+  let correctCount = 0;
+  let wrongCountThisQuiz = 0;
+  let wrongHtml = "";
+
+  currentQuestions.forEach((item, idx) => {
+    const selected = document.querySelector(`input[name="q${idx}"]:checked`);
+    const userAns = selected ? selected.value : "未作答";
+
+    if (!records[item.id]) {
+      records[item.id] = {
+        id: item.id,
+        section: item.section,
+        chapter: item.chapter,
+        source_no: item.source_no,
+        attempts: 0,
+        wrong: 0,
+        correct: 0,
+        mastery: 0
+      };
+    }
+
+    const rec = records[item.id];
+    rec.attempts += 1;
+
+    if (userAns === item.answer) {
+      correctCount += 1;
+      rec.correct += 1;
+      if (rec.wrong > 0) {
+        rec.mastery += 1;
+      }
+    } else {
+      wrongCountThisQuiz += 1;
+      rec.wrong += 1;
+      rec.mastery = 0; // 答錯就重新累積熟練度
+      wrongHtml += `
+        <div class="wrong-item">
+          <div><strong>第 ${idx + 1} 題（原題號 #${item.source_no}）</strong></div>
+          <div>${item.q}</div>
+          <div>你的答案：${userAns}</div>
+          <div class="correct-answer">正確答案：(${item.answer}) ${item.options[item.answer]}</div>
+        </div>
+      `;
+    }
+  });
+
+  setRecords(records);
+
+  const score = correctCount * 4;
+  const accuracy = ((correctCount / currentQuestions.length) * 100).toFixed(0);
+  const pass = score >= 60;
+
+  let bannerHtml = "";
+  if (!pass) {
+    bannerHtml = `<div class="fail-banner">你要加油！</div>`;
+    speakEncourage();
+  } else {
+    bannerHtml = `<div class="pass-banner">通過 👍</div>`;
+  }
+  document.getElementById("banner").innerHTML = bannerHtml;
+
+  document.getElementById("result").innerHTML = `
+    <div class="topstats">
+      <div class="stat"><div class="label">分數</div><div class="value">${score} / 100</div></div>
+      <div class="stat"><div class="label">答對</div><div class="value">${correctCount} 題</div></div>
+      <div class="stat"><div class="label">答錯</div><div class="value">${wrongCountThisQuiz} 題</div></div>
+      <div class="stat"><div class="label">正確率</div><div class="value">${accuracy}%</div></div>
+    </div>
+    <div class="section-title">錯題與正確答案</div>
+    ${wrongHtml || '<div class="question-card"><span class="good">恭喜，全對！</span></div>'}
+    <div class="note">錯題重測只會出「曾經答錯，且尚未連續答對滿 3 次」的題目。</div>
+  `;
+}
+
+function clearProgress() {
+  if (!confirm("確定要清除所有錯題記錄與熟練度嗎？")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  alert("已清除錯題記錄。");
+  renderTopStats({modeLabel:"已清除", quizCount:0});
+  document.getElementById("banner").innerHTML = "";
+  document.getElementById("result").innerHTML = "";
+}
+
+function showStats() {
+  const records = getRecords();
+  const byChapter = {};
+
+  Object.values(records).forEach(rec => {
+    const key = `${rec.section}｜${rec.chapter}`;
+    if (!byChapter[key]) {
+      byChapter[key] = {
+        section: rec.section,
+        chapter: rec.chapter,
+        attempts: 0,
+        wrong: 0,
+        correct: 0,
+        unmastered: 0
+      };
+    }
+    byChapter[key].attempts += rec.attempts || 0;
+    byChapter[key].wrong += rec.wrong || 0;
+    byChapter[key].correct += rec.correct || 0;
+    if ((rec.wrong || 0) > 0 && (rec.mastery || 0) < 3) byChapter[key].unmastered += 1;
+  });
+
+  const rows = Object.values(byChapter)
+    .sort((a,b) => {
+      const ra = a.attempts ? a.wrong / a.attempts : 0;
+      const rb = b.attempts ? b.wrong / b.attempts : 0;
+      return rb - ra;
+    })
+    .map(r => {
+      const rate = r.attempts ? ((r.wrong / r.attempts) * 100).toFixed(1) : "0.0";
+      return `
+        <tr>
+          <td>${r.section}</td>
+          <td>${r.chapter}</td>
+          <td>${r.attempts}</td>
+          <td>${r.wrong}</td>
+          <td>${rate}%</td>
+          <td>${r.unmastered}</td>
+        </tr>
+      `;
+    }).join("");
+
+  renderTopStats({modeLabel:"章節錯誤率", quizCount: currentQuestions.length || 0});
+  document.getElementById("banner").innerHTML = "";
+  document.getElementById("quiz").innerHTML = "";
+  document.getElementById("actionBar").classList.add("hidden");
+  document.getElementById("result").innerHTML = `
+    <div class="section-title">章節錯誤率統計</div>
+    <table class="stats-table">
+      <thead>
+        <tr>
+          <th>題型</th>
+          <th>章節</th>
+          <th>作答次數</th>
+          <th>答錯次數</th>
+          <th>錯誤率</th>
+          <th>未熟題數</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows || '<tr><td colspan="6">目前尚無作答紀錄。</td></tr>'}
+      </tbody>
+    </table>
+    <div class="note">未熟題數＝曾經答錯，且目前尚未連續答對滿 3 次的題目數。</div>
+  `;
+}
+
+renderTopStats({modeLabel:"待開始", quizCount:0});
+</script>
+</body>
+</html>
